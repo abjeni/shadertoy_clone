@@ -50,7 +50,13 @@ let sliders;
 
 window.onload = function() {
   let canvas = document.getElementById("canvas")
-
+  document.onkeydown = (event) => {
+    
+    if (event.ctrlKey && event.code == "KeyS") {
+      event.preventDefault();
+      alert("Saving");
+    }
+  }
 
   sliders = [document.getElementById("slider-1")];
   
@@ -118,3 +124,4 @@ function render(gl, program, time) {
   gl.drawArrays(primitiveType, offset, count);
   requestAnimationFrame((time) => render(gl, program, time));
 }
+
