@@ -10,7 +10,7 @@ void main() {
 }
 `
 
-let fragmentShaderSource = `#version 300 es
+let defaultFragmentShaderSource = `#version 300 es
 precision highp float;
 out vec4 outColor;
 uniform float slider;
@@ -48,16 +48,21 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
 let sliders;
 
+function shaderSaved(gl, shader) {
+  gl.deleteProgram(shader.program);
+  gl.deleteShader(shader.vertex)
+  gl.deleteShader(shader.fragment);
+
+  createProgramFromShaderStrings(gl, vertexShaderSource, document.getElementById("editor").value, shader);
+}
+
+
+
 window.onload = function() {
   let canvas = document.getElementById("canvas")
-  document.onkeydown = (event) => {
-    
-    if (event.ctrlKey && event.code == "KeyS") {
-      event.preventDefault();
-      alert("Saving");
-    }
-  }
 
+  let textarea = document.getElementById("editor");
+  textarea.textContent = defaultFragmentShaderSource;
   sliders = [document.getElementById("slider-1")];
   
   let gl = canvas.getContext("webgl2")
@@ -65,13 +70,38 @@ window.onload = function() {
     alert("Sorry, you need web gl 2");
     return
   }
+  var shader = {}
+  createProgramFromShaderStrings(gl, vertexShaderSource, defaultFragmentShaderSource, shader);
 
-  let vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-  let fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
 
-  var program = createProgram(gl, vertexShader, fragmentShader);
 
-  var positionAttributelocation = gl.getAttribLocation(program, "a_position")
+  
+  requestAnimationFrame((time) => render(gl, shader, time));
+
+
+  document.onkeydown = (event) => {
+    
+    if (event.ctrlKey && event.code == "KeyS") {
+      event.preventDefault();
+      console.log(shader)
+      shaderSaved(gl, shader);
+    }
+  }
+
+  document.getElementById("run-button").onclick = () => shaderSaved(gl, shader);
+  
+
+}
+
+function createProgramFromShaderStrings(gl, vertexShaderSource, fragmentShaderSource, shader) {
+  shader.vertex = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
+  shader.fragment = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
+  shader.program = createProgram(gl, shader.vertex, shader.fragment);
+}
+
+function render(gl, shader, time) {
+
+  var positionAttributelocation = gl.getAttribLocation(shader.program, "a_position")
   console.log(positionAttributelocation)
   var positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -100,28 +130,16 @@ window.onload = function() {
 
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-  gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-
-  gl.useProgram(program);
+  gl.useProgram(shader.program);
 
   gl.bindVertexArray(vao);
-
-
-  
-  requestAnimationFrame((time) => render(gl, program, time));
-  
-}
-
-function render(gl, program, time) {
-
   var primitiveType = gl.TRIANGLES;
   var offset = 0;
   var count = 6;
   var slider1Value = new Number(sliders[0].value)
-  var sliderUniformLocation = gl.getUniformLocation(program, "slider");
+  var sliderUniformLocation = gl.getUniformLocation(shader.program, "slider");
   gl.uniform1f(sliderUniformLocation, slider1Value);
   gl.drawArrays(primitiveType, offset, count);
-  requestAnimationFrame((time) => render(gl, program, time));
+  requestAnimationFrame((time) => render(gl, shader, time));
 }
 
