@@ -6,7 +6,6 @@
 
 #left-pane, #right-pane {
     flex: 0 0 calc(50% - .5em);
-    
 }
 
 #canvas {
