@@ -56,7 +56,6 @@ function createProgram(gl, vertexShader, fragmentShader) {
   gl.deleteProgram(program);
 }
 
-
 function shaderSaved(gl, shader) {
   gl.deleteProgram(shader.program);
   gl.deleteShader(shader.vertex)
@@ -87,12 +86,8 @@ window.onload = function() {
   }
   var shader = {}
   createProgramFromShaderStrings(gl, vertexShaderSource, defaultFragmentShaderSource, shader);
-
-
-
   
   requestAnimationFrame((time) => render(gl, shader, time));
-
 
   document.onkeydown = (event) => {
     
@@ -104,8 +99,6 @@ window.onload = function() {
   }
 
   document.getElementById("run-button").onclick = () => shaderSaved(gl, shader);
-  
-
 }
 
 function createProgramFromShaderStrings(gl, vertexShaderSource, fragmentShaderSource, shader) {
@@ -148,7 +141,6 @@ function render(gl, shader, time) {
     gl.useProgram(shader.program);
 
     gl.bindVertexArray(vao);
-
 
     shaderUpdated = false;
   }
