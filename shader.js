@@ -95,6 +95,9 @@ function shaderSaved(gl, shader) {
 var shaderUpdated = true;
 
 window.onload = function() {
+  Split(["#split-0", "#split-1"])
+
+
   elements.canvas = document.getElementById("canvas")
   elements.sliders = [document.getElementById("slider-1")];
 
@@ -138,6 +141,7 @@ function createProgramFromShaderStrings(gl, vertexShaderSource, fragmentShaderSo
 function render(gl, shader, time) {
 
   if (shaderUpdated) {
+    shaderUpdated = false;
     var positionAttributelocation = gl.getAttribLocation(shader.program, "a_position")
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -169,8 +173,6 @@ function render(gl, shader, time) {
     gl.useProgram(shader.program);
 
     gl.bindVertexArray(vao);
-
-    shaderUpdated = false;
   }
 
 

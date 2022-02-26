@@ -4,18 +4,19 @@
   <title>shaders</title>
   <link rel="stylesheet" href="style.css" >
   <script src="js/api/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
   <script src="shader.js"></script>
 </head>
 <body>
-  <div id="container" >
-    <div id="left-pane">
+  <div id="split" >
+    <div id="split-0">
       <canvas id="canvas"></canvas>
       <div id="controls">
         <input id="slider-1" type="range" min="0" max="1" value="0.5" step="any"/>
       </div>
     </div>
 
-    <div id="right-pane">
+    <div id="split-1">
       <div id="editor"></div>
       <button type="button" id="run-button" >▶ Run</button>
       <pre><code id="log-area"></code></pre>
