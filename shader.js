@@ -26,6 +26,11 @@ var elements = {
   sliders: undefined, logArea: undefined
 }
 
+function clearErrors() {
+  elements.logArea.textContent = "";
+  elements.editor.getSession().clearAnnotations();
+}
+
 function createShader(gl, type, source) {
 
   var shader = gl.createShader(type)
@@ -33,7 +38,10 @@ function createShader(gl, type, source) {
   gl.compileShader(shader)
 
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
-  if (success) return shader
+  if (success) {
+    clearErrors()
+    return shader
+  }
 
 
   displayError(gl.getShaderInfoLog(shader))
@@ -48,12 +56,12 @@ function displayError(errorLogLines) {
   var splittedError = errorLogLines.split(":").map(x => x.trim());
 
   if (splittedError.length >= 5) {
-    var [type, column, row, text, message] = splittedError;
+    var [type, column, row, codeWithError, message] = splittedError;
 
     elements.editor.getSession().setAnnotations([{
       row: Number(row) - 1,
       column: Number(column),
-      text: message, // Or the Json reply from the parser 
+      text: `${codeWithError} : ${message}`, // Or the Json reply from the parser 
       type: type.toLowerCase() // also "warning" and "information"
     }]);
   }
