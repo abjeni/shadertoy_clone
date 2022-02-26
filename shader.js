@@ -17,7 +17,6 @@ uniform float slider;
 in vec2 color;
 
 void main() {
-    
     outColor = vec4(color, slider, 1);
 }
 `
@@ -36,8 +35,28 @@ function createShader(gl, type, source) {
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
   if (success) return shader
 
-  logArea.textContent = gl.getShaderInfoLog(shader);
+
+  displayError(gl.getShaderInfoLog(shader))
+
   gl.deleteShader(shader)
+}
+
+function displayError(errorLogLines) {
+  
+  elements.logArea.textContent = errorLogLines;
+
+  var splittedError = errorLogLines.split(":").map(x => x.trim());
+
+  if (splittedError.length >= 5) {
+    var [type, column, row, text, message] = splittedError;
+
+    elements.editor.getSession().setAnnotations([{
+      row: Number(row) - 1,
+      column: Number(column),
+      text: message, // Or the Json reply from the parser 
+      type: type.toLowerCase() // also "warning" and "information"
+    }]);
+  }
 }
 
 function createProgram(gl, vertexShader, fragmentShader) {
@@ -61,7 +80,7 @@ function shaderSaved(gl, shader) {
   gl.deleteShader(shader.vertex)
   gl.deleteShader(shader.fragment);
 
-  createProgramFromShaderStrings(gl, vertexShaderSource, elements.editor.getValue(), shader); // TODO
+  createProgramFromShaderStrings(gl, vertexShaderSource, elements.editor.getValue(), shader);
   
 }
 
@@ -71,7 +90,7 @@ window.onload = function() {
   elements.canvas = document.getElementById("canvas")
   elements.sliders = [document.getElementById("slider-1")];
 
-  logArea = document.getElementById("log-area");
+  elements.logArea = document.getElementById("log-area");
   elements.editor = ace.edit("editor");
   elements.editor.setTheme("ace/theme/monokai");
   elements.editor.session.setMode("ace/mode/glsl");
@@ -104,7 +123,8 @@ window.onload = function() {
 function createProgramFromShaderStrings(gl, vertexShaderSource, fragmentShaderSource, shader) {
   shader.vertex = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
   shader.fragment = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
-  shader.program = createProgram(gl, shader.vertex, shader.fragment);
+  if (shader.vertex && shader.fragment)
+    shader.program = createProgram(gl, shader.vertex, shader.fragment);
 }
 
 function render(gl, shader, time) {

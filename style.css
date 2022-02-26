@@ -8,6 +8,8 @@
     flex: 0 0 calc(50% - .5em);
 }
 
+#log-area { color: red; }
+
 #canvas {
     width: 100%;
 }
