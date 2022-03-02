@@ -1,7 +1,7 @@
 <?php
 $servername = "192.168.10.124";
-$username = "root";
-$password = "";
+$username = getenv("SHADER_DATABASE_USERNAME");
+$password = getenv("SHADER_DATABASE_PASSWORD");
 
 // Create connection
 $conn = new mysqli($servername, $username, $password);
@@ -26,4 +26,4 @@ if ($result->num_rows > 0) {
 }
 
 $conn->close();
-?> 
+?>
