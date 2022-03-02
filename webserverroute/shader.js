@@ -10,17 +10,6 @@ void main() {
 }
 `
 
-let defaultFragmentShaderSource = `#version 300 es
-precision highp float;
-out vec4 outColor;
-uniform float slider;
-in vec2 color;
-
-void main() {
-    outColor = vec4(color, slider, 1);
-}
-`
-
 var elements = {
   canvas: undefined, editor: undefined,
   sliders: undefined, logArea: undefined
@@ -95,8 +84,8 @@ function shaderSaved(gl, shader) {
 var shaderUpdated = true;
 
 window.onload = function() {
+  fetch('default.php').then(response => response.text()).then(main)
   Split(["#split-0", "#split-1"])
-
 
   elements.canvas = document.getElementById("canvas")
   elements.sliders = [document.getElementById("slider-1")];
@@ -105,15 +94,19 @@ window.onload = function() {
   elements.editor = ace.edit("editor");
   elements.editor.setTheme("ace/theme/monokai");
   elements.editor.session.setMode("ace/mode/glsl");
+}
+
+function main(defaultFragmentShaderSource) {
 
   elements.editor.setValue(defaultFragmentShaderSource);
   elements.editor.gotoLine(8);
-    //textarea.textContent = defaultFragmentShaderSource;
+  //textarea.textContent = defaultFragmentShaderSource;
   let gl = elements.canvas.getContext("webgl2")
   if (!gl) {
     alert("Sorry, you need web gl 2");
     return
   }
+
   var shader = {}
   createProgramFromShaderStrings(gl, vertexShaderSource, defaultFragmentShaderSource, shader);
   
