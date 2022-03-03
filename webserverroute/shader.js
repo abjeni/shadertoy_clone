@@ -1,3 +1,7 @@
+
+//global variables
+let shaderUpdated = true;
+
 let vertexShaderSource = `#version 300 es
 precision highp float;
 in vec4 a_position;
@@ -8,11 +12,25 @@ void main() {
   color = a_position.xy;
   gl_Position = a_position;
 }
-`
+`;
 
 var elements = {
   canvas: undefined, editor: undefined,
   sliders: undefined, logArea: undefined
+};
+
+// end of global variables
+
+function resize(canvas) { // this doesn't work, window inndeWidth and innerHeight is not the canvas size
+  var displayWidth  = window.innerWidth;
+  var displayHeight = window.innerHeight;
+
+  if (canvas.width  !== displayWidth ||
+      canvas.height !== displayHeight) {
+
+      canvas.width  = displayWidth;
+      canvas.height = displayHeight;
+  }
 }
 
 function clearErrors() {
@@ -22,20 +40,20 @@ function clearErrors() {
 
 function createShader(gl, type, source) {
 
-  var shader = gl.createShader(type)
-  gl.shaderSource(shader, source)
-  gl.compileShader(shader)
+  var shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
 
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
   if (success) {
-    clearErrors()
-    return shader
+    clearErrors();
+    return shader;
   }
 
+  displayError(gl.getShaderInfoLog(shader));
 
-  displayError(gl.getShaderInfoLog(shader))
-
-  gl.deleteShader(shader)
+  gl.deleteShader(shader);
+  return false
 }
 
 function displayError(errorLogLines) {
@@ -74,26 +92,92 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
 function shaderSaved(gl, shader) {
   gl.deleteProgram(shader.program);
-  gl.deleteShader(shader.vertex)
+  gl.deleteShader(shader.vertex);
   gl.deleteShader(shader.fragment);
 
   createProgramFromShaderStrings(gl, vertexShaderSource, elements.editor.getValue(), shader);
-  
 }
 
-var shaderUpdated = true;
+function createProgramFromShaderStrings(gl, vertexShaderSource, fragmentShaderSource, shader) {
+  shader.vertex = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+  shader.fragment = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+  if (shader.vertex && shader.fragment)
+    shader.program = createProgram(gl, shader.vertex, shader.fragment);
+}
 
-window.onload = function() {
-  fetch('default.php').then(response => response.text()).then(main)
-  Split(["#split-0", "#split-1"])
+function getShaderSourceById(id) {
+  let formData = new FormData();
+  formData.append('id', id);
 
-  elements.canvas = document.getElementById("canvas")
+  let myInit = {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin',
+    mode: 'cors',
+    cache: 'default'
+  };
+
+  let myRequest = new Request("getShaderById.php",myInit);
+
+  fetch(myRequest).then(function(response) {
+    response.text().then(main)
+  })
+}
+
+function saveShaderSourceById(id, source) {
+  let formData = new FormData();
+  formData.append('id', id);
+  formData.append('source', source);
+
+  let myInit = {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin',
+    mode: 'cors',
+    cache: 'default'
+  };
+
+  let myRequest = new Request("saveShader.php",myInit);
+
+  fetch(myRequest).then(function(response) {
+    response.text().then((text) => console.log(text));
+  })
+}
+
+function saveShader() {
+  let paramString = window.location.search;
+  let queryString = new URLSearchParams(paramString);
+  let source = elements.editor.getValue();
+  let id = parseInt(queryString.get("id"));
+  if (isNaN(id)) return;
+  if (id == 3) return; //won't allow default shader saving for nows
+  saveShaderSourceById(id, source);
+}
+
+function getShaderSource() {
+  let paramString = window.location.search;
+  let queryString = new URLSearchParams(paramString);
+  let id = parseInt(queryString.get("id"));
+  if (isNaN(id)) id = 3; //default shader has id 3
+  console.log(id)
+  getShaderSourceById(id);
+}
+
+function initEditorSplit() {
+  Split(["#split-0", "#split-1"]);
+
+  elements.canvas = document.getElementById("canvas");
   elements.sliders = [document.getElementById("slider-1")];
 
   elements.logArea = document.getElementById("log-area");
   elements.editor = ace.edit("editor");
   elements.editor.setTheme("ace/theme/monokai");
   elements.editor.session.setMode("ace/mode/glsl");
+}
+
+window.onload = function() {
+  getShaderSource();
+  initEditorSplit();
 }
 
 function main(defaultFragmentShaderSource) {
@@ -104,7 +188,7 @@ function main(defaultFragmentShaderSource) {
   let gl = elements.canvas.getContext("webgl2")
   if (!gl) {
     alert("Sorry, you need web gl 2");
-    return
+    return;
   }
 
   var shader = {}
@@ -122,20 +206,16 @@ function main(defaultFragmentShaderSource) {
   }
 
   document.getElementById("run-button").onclick = () => shaderSaved(gl, shader);
-}
-
-function createProgramFromShaderStrings(gl, vertexShaderSource, fragmentShaderSource, shader) {
-  shader.vertex = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
-  shader.fragment = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
-  if (shader.vertex && shader.fragment)
-    shader.program = createProgram(gl, shader.vertex, shader.fragment);
+  document.getElementById("save-button").onclick = () => saveShader(gl, shader);
 }
 
 function render(gl, shader, time) {
 
+  resize(gl.canvas);
+
   if (shaderUpdated) {
     shaderUpdated = false;
-    var positionAttributelocation = gl.getAttribLocation(shader.program, "a_position")
+    var positionAttributelocation = gl.getAttribLocation(shader.program, "a_position");
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 

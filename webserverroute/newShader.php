@@ -8,22 +8,27 @@ $conn = new mysqli($servername, $username, $password);
 
 // Check connection
 if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
+  die("!Connection failed: " . $conn->connect_error);
 }
 
 $conn->query("USE shaders");
 
 $sql = "SELECT source FROM shaders WHERE (id = 3)";
 $result = $conn->query($sql);
-
-if ($result->num_rows > 0) {
-  // output data of each row
-  while($row = $result->fetch_assoc()) {
-    echo $row["source"];
-  }
-} else {
-  echo "error no default shader >:D";
+if ($result->num_rows <= 0) {
+  die("!no default shader oops");
 }
+
+$row = $result->fetch_assoc();
+$source = $row["source"];
+
+$sql = $conn->prepare("INSERT INTO shaders (source) VALUES (?)");
+$sql->bind_param("s", $source); //"s" -> string
+$sql->execute();
+$result = $sql->get_result();
+
+$last_id = $conn->insert_id;
+echo $last_id;
 
 $conn->close();
 ?>
